@@ -51,7 +51,7 @@ class Customer(Agent):
         # Pick the next cell from the adjacent empty cells.
         next_moves = self.model.grid.get_neighborhood(self.pos, self.moore, True)
         for move in next_moves:
-            if self.model.grid.is_cell_empty(move):
+            if not self.model.grid.is_cell_empty(move):
                 next_moves.remove(move)
         next_move = self.random.choice(next_moves)
         # Now move:

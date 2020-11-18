@@ -12,6 +12,10 @@ class Store(Model):
         Create a new playing area of (height, width) cells.
         """
         super().__init__()
+        self.height = height
+        self.width = width
+        self.capacity = capacity
+        self.customers = customers
         self.store_pop = 0
 
         # Set up the grid and schedule.
@@ -23,7 +27,10 @@ class Store(Model):
         self.schedule = SimultaneousActivation(self)
 
         # Use a simple grid, where edges wrap around.
-        self.grid = MultiGrid(height, width, torus=True)
+        self.grid = MultiGrid(height, width, torus=False)
+
+        cust = Customer(self.next_id(), self)
+        #self.grid.place_agent(cust, (50,50))
 
         self.running = True
 
@@ -33,10 +40,11 @@ class Store(Model):
         """
         if self.store_pop < self.capacity:
             for i in range(4):
-                entry_pos = (self.width/2, self.height - 1 + i)
+                entry_pos = (int(self.width/2  - 1 + i), int(self.height) -1)
                 cust = Customer(self.next_id(), self)
                 if self.grid.is_cell_empty(entry_pos):
                     self.grid.place_agent(cust, entry_pos)
+                    self.schedule.add(cust)
                     self.store_pop += 1
                     self.customers -= 1
         self.schedule.step()
