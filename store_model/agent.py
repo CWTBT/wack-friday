@@ -21,7 +21,7 @@ class Shelf(Agent):
     """
     The shelves
     """
-    def __init__(self, unique_id, model, contents, moore=True):
+    def __init__(self, unique_id, model, contents=[], moore=True):
         super().__init__(unique_id, model)
         self.moore = moore
         self.contents = contents
@@ -50,10 +50,12 @@ class Customer(Agent):
         """
         # Pick the next cell from the adjacent empty cells.
         next_moves = self.model.grid.get_neighborhood(self.pos, self.moore, True)
+        valid_moves = []
         for move in next_moves:
-            if not self.model.grid.is_cell_empty(move):
-                next_moves.remove(move)
-        next_move = self.random.choice(next_moves)
+            if self.model.grid.is_cell_empty(move):
+                valid_moves.append(move)
+        if len(valid_moves) == 0: return
+        next_move = self.random.choice(valid_moves)
         # Now move:
         self.model.grid.move_agent(self, next_move)
 

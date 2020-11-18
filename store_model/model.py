@@ -1,8 +1,9 @@
 from mesa import Model
 from mesa.time import SimultaneousActivation
 from mesa.space import MultiGrid
+import random
 
-from .agent import Customer
+from .agent import Customer, Shelf
 
 # derived from ConwaysGameOfLife
 class Store(Model):
@@ -29,8 +30,18 @@ class Store(Model):
         # Use a simple grid, where edges wrap around.
         self.grid = MultiGrid(height, width, torus=False)
 
-        cust = Customer(self.next_id(), self)
-        #self.grid.place_agent(cust, (50,50))
+        for i in range(20):
+            x = random.randint(0, self.width - 10)
+            y = random.randint(0, self.height - 10)
+            pos = (x, y)
+            for j in range(4):
+                shelf1 = Shelf(self.next_id(), self)
+                shelf2 = Shelf(self.next_id(), self)
+                self.grid.place_agent(shelf1, (x+j, y))
+                self.grid.place_agent(shelf2, (x+j, y-1))
+                self.schedule.add(shelf1)
+                self.schedule.add(shelf2)
+
 
         self.running = True
 
