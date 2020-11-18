@@ -31,8 +31,8 @@ class Store(Model):
         self.grid = MultiGrid(height, width, torus=False)
 
         for i in range(20):
-            x = random.randint(0, self.width - 10)
-            y = random.randint(0, self.height - 10)
+            x = random.randint(10, self.width - 10)
+            y = random.randint(10, self.height - 10)
             pos = (x, y)
             for j in range(4):
                 shelf1 = Shelf(self.next_id(), self)
