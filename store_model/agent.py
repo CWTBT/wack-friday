@@ -17,11 +17,12 @@ def get_distance(pos_1, pos_2):
     return math.sqrt(dx ** 2 + dy ** 2)
 
 
+
 class Shelf(Agent):
     """
     The shelves
     """
-    def __init__(self, unique_id, model, contents=[], moore=True):
+    def __init__(self, unique_id, model, contents, moore=True):
         super().__init__(unique_id, model)
         self.moore = moore
         self.contents = contents

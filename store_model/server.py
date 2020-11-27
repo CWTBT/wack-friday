@@ -6,6 +6,10 @@ from .model import Store
 from .agent import Customer, Shelf
 import math
 
+"""
+possible_content = ["Electronics", "Clothing","Food", "misc"]
+"""
+
 def store_portrayal(agent):
     if agent is None:
         return
@@ -26,7 +30,16 @@ def store_portrayal(agent):
         portrayal["Layer"] = 1
         portrayal["w"] = 1
         portrayal["h"] = 1
-        portrayal["Color"] = '#000000'
+        if agent.contents == "Electronics":
+            portrayal["Color"] = '#0000ff'
+        elif agent.contents == "Clothing":
+            portrayal["Color"] = '#ffff00'
+        elif agent.contents == "Food":
+            portrayal["Color"] = '#00ff00'
+        elif agent.contents == "misc":
+            portrayal["Color"] = '#ff00ff'
+        else:
+            portrayal["Color"] = '#000000'
 
     return portrayal
 
