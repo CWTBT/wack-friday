@@ -8,7 +8,9 @@ from .agent import Customer, Shelf
 # derived from ConwaysGameOfLife
 class Store(Model):
 
-    def __init__(self, height=108, width=108, capacity=525, customers=2000):
+    # default capacity = 525
+    # default customers = 2000
+    def __init__(self, height=108, width=108, capacity=5, customers=10):
         """
         Create a new playing area of (height, width) cells.
         """
@@ -18,6 +20,7 @@ class Store(Model):
         self.capacity = capacity
         self.customers = customers
         self.store_pop = 0
+        self.to_kill = []
 
         # Set up the grid and schedule.
 
@@ -49,13 +52,21 @@ class Store(Model):
         """
         Have the scheduler advance each cell by one step
         """
-        if self.store_pop < self.capacity:
-            for i in range(4):
-                entry_pos = (int(self.width/2  - 1 + i), int(self.height) -1)
-                cust = Customer(self.next_id(), self)
-                if self.grid.is_cell_empty(entry_pos):
-                    self.grid.place_agent(cust, entry_pos)
-                    self.schedule.add(cust)
+        self.schedule.step()
+        for cust in self.to_kill:
+            self.grid.remove_agent(cust)
+            self.schedule.remove(cust)
+            self.to_kill.remove(cust)
+            self.store_pop -= 1
+        for i in range(4):
+            entry_pos = (int(self.width/2  - 1 + i), int(self.height) -1)
+            if self.grid.is_cell_empty(entry_pos) and self.store_pop < self.capacity:
+                if self.customers > 0:
                     self.store_pop += 1
                     self.customers -= 1
-        self.schedule.step()
+                    cust = Customer(self.next_id(), self)
+                    self.grid.place_agent(cust, entry_pos)
+                    self.schedule.add(cust)
+
+    def exit(self, cust):
+        self.to_kill.append(cust)

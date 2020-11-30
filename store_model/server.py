@@ -18,7 +18,8 @@ def store_portrayal(agent):
         portrayal["Layer"] = 1
         portrayal["w"] = 1
         portrayal["h"] = 1
-        portrayal["Color"] = '#ff0000'
+        if agent.state == "LOOK": portrayal["Color"] = '#ff0000'
+        else: portrayal["Color"] = '#ffff00'
 
     elif type(agent) is Shelf:
         portrayal["Shape"] = "rect"
