@@ -1,5 +1,8 @@
 from mesa import Agent
 import math
+import random
+
+wanted_items = ["Electronics", "Clothing", "Cookware", "Video Games", "Sports Equipment", "Food"]
 
 
 # from sugarscape_cg
@@ -36,13 +39,18 @@ class Customer(Agent):
         super().__init__(unique_id, model)
         self.state = "LOOK"
         self.moore = moore
+        self.patience = random.randint(100, 200)
+        self.wants = []
+        self.exit_positions = [(int(self.model.grid.width/2  - 1 + i), int(self.model.grid.height) -1) for i in range(4)]
+        for i in range(3):
+            self.wants.append(random.choice(wanted_items))
 
     def step(self):
-        """
-        For now, customers simply move randomly and cannot take up an occupied square
-        """
         if self.state == "LOOK":
             self.random_move()
+        if self.state == "CHECKOUT":
+            if self.pos == self.exit_positions[3]: self.model.exit(self)
+            else: self.exit_move()
 
     # based on wolf_sheep RandomWalker
     def random_move(self):
@@ -58,5 +66,20 @@ class Customer(Agent):
         if len(valid_moves) == 0: return
         next_move = self.random.choice(valid_moves)
         # Now move:
+        self.patience -= 1
+        if self.patience == 0: self.state = "CHECKOUT"
         self.model.grid.move_agent(self, next_move)
+
+    def exit_move(self):
+        # Get neighborhood within vision
+        valid_moves = [n for n in self.model.grid.get_neighborhood(self.pos, self.moore, True) if self.model.grid.is_cell_empty(n)]
+        if len(valid_moves) == 0: return
+        # For now, just pathfinds to the far right door
+        min_dist = min([get_distance(self.exit_positions[3], pos) for pos in valid_moves])
+        
+        final_candidates = [
+            pos for pos in valid_moves if get_distance(self.exit_positions[3], pos) == min_dist
+        ]
+        self.random.shuffle(final_candidates)
+        self.model.grid.move_agent(self, final_candidates[0])
 
