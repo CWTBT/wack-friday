@@ -1,6 +1,6 @@
 from mesa import Model
 from mesa.time import SimultaneousActivation
-from mesa.space import MultiGrid
+from mesa.space import Grid
 import random
 import numpy as np
 
@@ -35,7 +35,7 @@ class Store(Model):
         self.schedule = SimultaneousActivation(self)
 
         # Use a simple grid, where edges wrap around.
-        self.grid = MultiGrid(height, width, torus=False)
+        self.grid = Grid(height, width, torus=False)
 
         # if no layout is fed in, generates it's own layout. Else it feeds the layout to the grid
         if self.layout == 0:
@@ -45,7 +45,7 @@ class Store(Model):
 
         # place check-out squares
         for x in np.arange(2, self.width-2, 3):
-            if (x < self.width / 2 - 1) or (x > self.width / 2 + 3):
+            if (x < self.width / 2 - 15) or (x > self.width / 2 ):
                 checkout = Checkout(self.next_id(), self)
                 self.grid.place_agent(checkout, (x, self.height - 5))
                 self.schedule.add(checkout)
@@ -178,7 +178,7 @@ class Store(Model):
             self.to_kill.remove(cust)
             self.store_pop -= 1
         for i in range(4):
-            entry_pos = (int(self.width / 2 - 1 + i), int(self.height) - 1)
+            entry_pos = (int(self.width / 2 - 9 + i), int(self.height) - 1)
             if self.grid.is_cell_empty(entry_pos) and self.store_pop < self.capacity:
                 if self.customers > 0:
                     self.store_pop += 1

@@ -45,14 +45,16 @@ class Customer(Agent):
         self.target = None
         for i in range(3):
             self.wants.append(random.choice(wanted_items))
-        self.exit_positions = [(int(self.model.grid.width/2  - 1 + i), int(self.model.grid.height) -1) for i in range(4)]
+        self.exit_positions = [(int(self.model.grid.width/2  + 7 + i), int(self.model.grid.height) -1) for i in range(4)]
 
     def step(self):
         if self.state == "LOOK":
             self.look_move()
             self.shop()
         if self.state == "CHECKOUT":
-            if self.pos == self.exit_positions[3]: self.model.exit(self)
+            # TODO: this will not work if you try to check all positions
+            # i have literally no clue why
+            if self.pos == self.exit_positions[0]: self.model.exit(self)
             else: self.exit_move()
 
     def find_shelf(self):
@@ -103,7 +105,6 @@ class Customer(Agent):
             elif self.wants[-1] == shelf.contents:
                 del self.wants[-1]
                 shelf.amount -= 1
-                # print("yoink")
                 if len(self.wants) == 0: 
                     self.state = "CHECKOUT"
                     break
@@ -114,10 +115,10 @@ class Customer(Agent):
         valid_moves = [n for n in self.model.grid.get_neighborhood(self.pos, self.moore, True) if self.model.grid.is_cell_empty(n)]
         if len(valid_moves) == 0: return
         # For now, just pathfinds to the far right door
-        min_dist = min([get_distance(self.exit_positions[3], pos) for pos in valid_moves])
+        min_dist = min([get_distance(self.exit_positions[0], pos) for pos in valid_moves])
         
         final_candidates = [
-            pos for pos in valid_moves if get_distance(self.exit_positions[3], pos) == min_dist
+            pos for pos in valid_moves if get_distance(self.exit_positions[0], pos) == min_dist
         ]
         self.random.shuffle(final_candidates)
         self.model.grid.move_agent(self, final_candidates[0])
