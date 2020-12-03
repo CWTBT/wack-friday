@@ -46,12 +46,12 @@ def store_portrayal(agent):
 
 # dervied from ConwaysGameOfLife
 # Make a world that is 50x50, on a 500x500 display.
-canvas_element = CanvasGrid(store_portrayal, 50, 50, 500, 500)
+canvas_element = CanvasGrid(store_portrayal, 108, 108, 1080, 1080)
 
 # derived from schelling
 model_params = {
-    "height": 50,
-    "width": 50,
+    "height": 108,
+    "width": 108,
 }
 
 server = ModularServer(

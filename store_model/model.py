@@ -10,7 +10,7 @@ class Store(Model):
 
     # default capacity = 525
     # default customers = 2000
-    def __init__(self, height=108, width=108, capacity=5, customers=10):
+    def __init__(self, height=108, width=108, capacity=525, customers=2000):
         """
         Create a new playing area of (height, width) cells.
         """
