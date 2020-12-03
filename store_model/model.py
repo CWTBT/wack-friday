@@ -66,6 +66,8 @@ class Store(Model):
             self.grid.place_agent(shelf2, (x - 1, y + j))
             self.schedule.add(shelf1)
             self.schedule.add(shelf2)
+            self.shelf_list.append(shelf1)
+            self.shelf_list.append(shelf2)
 
     def __place_h_shelf__(self, pos, content):
         x,y = pos
@@ -76,6 +78,8 @@ class Store(Model):
             self.grid.place_agent(shelf2, (x + j, y - 1))
             self.schedule.add(shelf1)
             self.schedule.add(shelf2)
+            self.shelf_list.append(shelf1)
+            self.shelf_list.append(shelf2)
 
     def create_layout(self, amount=20):
         self.layout = []
