@@ -42,17 +42,29 @@ class Customer(Agent):
         self.moore = moore
         self.patience = random.randint(500, 1000)
         self.wants = []
-        self.exit_positions = [(int(self.model.grid.width/2  - 1 + i), int(self.model.grid.height) -1) for i in range(4)]
+        self.target = None
         for i in range(3):
             self.wants.append(random.choice(wanted_items))
+        self.exit_positions = [(int(self.model.grid.width/2  - 1 + i), int(self.model.grid.height) -1) for i in range(4)]
 
     def step(self):
         if self.state == "LOOK":
-            self.random_move()
+            self.look_move()
             self.shop()
         if self.state == "CHECKOUT":
             if self.pos == self.exit_positions[3]: self.model.exit(self)
             else: self.exit_move()
+
+    def find_shelf(self):
+        best_shelf = None
+        min_dist = 9999
+        for shelf in self.model.shelf_list:
+            if shelf.contents == self.wants[-1]:
+                dist = get_distance(shelf.pos, self.pos)
+                if dist < min_dist:
+                    min_dist = dist
+                    best_shelf = shelf
+        return best_shelf
 
     # based on wolf_sheep RandomWalker
     def random_move(self):
@@ -72,6 +84,18 @@ class Customer(Agent):
         if self.patience == 0: self.state = "CHECKOUT"
         self.model.grid.move_agent(self, next_move)
 
+    # TODO: combine look_move() and exit_move() into homing_move(target)
+    def look_move(self):
+        # Get neighborhood within vision
+        valid_moves = [n for n in self.model.grid.get_neighborhood(self.pos, self.moore, True) if self.model.grid.is_cell_empty(n)]
+        if len(valid_moves) == 0: return
+        min_dist = min([get_distance(self.target.pos, pos) for pos in valid_moves])
+        final_candidates = [
+            pos for pos in valid_moves if get_distance(self.target.pos, pos) == min_dist
+        ]
+        self.random.shuffle(final_candidates)
+        self.model.grid.move_agent(self, final_candidates[0])
+
     def shop(self):
         n_shelves = [n for n in self.model.grid.get_neighbors(self.pos, self.moore) if type(n) is Shelf]
         for shelf in n_shelves:
@@ -79,9 +103,11 @@ class Customer(Agent):
             elif self.wants[-1] == shelf.contents:
                 del self.wants[-1]
                 shelf.amount -= 1
+                print("yoink")
                 if len(self.wants) == 0: 
                     self.state = "CHECKOUT"
                     break
+                else: self.target = self.find_shelf()
             
     def exit_move(self):
         # Get neighborhood within vision

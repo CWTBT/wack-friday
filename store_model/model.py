@@ -24,6 +24,7 @@ class Store(Model):
         self.to_kill = []
         self.possible_content = ["Electronics", "Clothing", "Food", "misc"]
         self.layout = layout
+        self.shelf_list = []
 
         # Set up the grid and schedule.
 
@@ -64,6 +65,8 @@ class Store(Model):
             self.grid.place_agent(shelf2, (x - 1, y + j))
             self.schedule.add(shelf1)
             self.schedule.add(shelf2)
+            self.shelf_list.append(shelf1)
+            self.shelf_list.append(shelf2)
 
     def __add_h_shelf__(self, pos):
         for j in range(4):
@@ -73,6 +76,8 @@ class Store(Model):
             self.grid.place_agent(shelf2, (x + j, y - 1))
             self.schedule.add(shelf1)
             self.schedule.add(shelf2)
+            self.shelf_list.append(shelf1)
+            self.shelf_list.append(shelf2)
 
     def create_layout(self, amount = 20):
         self.layout = np.zeros((self.width, self.height), dtype=str).tolist()
@@ -106,6 +111,8 @@ class Store(Model):
                     self.grid.place_agent(shelf2, (x + j, y - 1))
                     self.schedule.add(shelf1)
                     self.schedule.add(shelf2)
+                    self.shelf_list.append(shelf1)
+                    self.shelf_list.append(shelf2)
                 done = True
 
             elif not self.check_for_shelf(pos, 'v'):
@@ -116,6 +123,8 @@ class Store(Model):
                     self.grid.place_agent(shelf2, (x  - 1, y + j))
                     self.schedule.add(shelf1)
                     self.schedule.add(shelf2)
+                    self.shelf_list.append(shelf1)
+                    self.shelf_list.append(shelf2)
                 done = True
 
     def check_for_shelf(self, pos, direction):
@@ -187,6 +196,7 @@ class Store(Model):
                     cust = Customer(self.next_id(), self)
                     self.grid.place_agent(cust, entry_pos)
                     self.schedule.add(cust)
+                    cust.target = cust.find_shelf()
 
     def exit(self, cust):
         self.to_kill.append(cust)
