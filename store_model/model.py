@@ -2,7 +2,6 @@ from mesa import Model
 from mesa.time import SimultaneousActivation
 from mesa.space import MultiGrid
 import random
-import numpy as np
 
 from .agent import Customer, Shelf
 
@@ -11,7 +10,7 @@ class Store(Model):
 
     # default capacity = 525
     # default customers = 2000
-    def __init__(self, height=108, width=108, capacity=525, customers=2000, layout = []):
+    def __init__(self, height=108, width=108, capacity=525, customers=2000, layout=0):
         """
         Create a new playing area of (height, width) cells.
         """
@@ -37,27 +36,29 @@ class Store(Model):
         # Use a simple grid, where edges wrap around.
         self.grid = MultiGrid(height, width, torus=False)
 
-        if self.layout == []:
+        if self.layout == 0:
             self.create_layout(40)
         else:
             self.set_up()
 
         self.running = True
 
+    def clone(self):
+        return Store(self.height, self.width, self.capacity, self.customers, self.layout)
+
     def get_layout(self):
         return self.layout
 
     def set_up(self):
-        for x in range(len(self.layout)):
-            for y in range(len(self.layout[x])):
-                content = self.layout[x][y]
-                if content == 'h':
-                    self.__add_h_shelf__((x,y))
-                elif content == 'v':
-                    self.__add_v_shelf__((x, y))
+        for shelf in self.layout:
+            pos, direction, content = shelf
+            if direction == 'v':
+                self.__place_v_shelf__(pos, content)
+            else:
+                self.__place_h_shelf__(pos, content)
 
-
-    def __add_v_shelf__(self, pos):
+    def __place_v_shelf__(self, pos, content):
+        x, y = pos
         for j in range(4):
             shelf1 = Shelf(self.next_id(), self, content)
             shelf2 = Shelf(self.next_id(), self, content)
@@ -65,10 +66,9 @@ class Store(Model):
             self.grid.place_agent(shelf2, (x - 1, y + j))
             self.schedule.add(shelf1)
             self.schedule.add(shelf2)
-            self.shelf_list.append(shelf1)
-            self.shelf_list.append(shelf2)
 
-    def __add_h_shelf__(self, pos):
+    def __place_h_shelf__(self, pos, content):
+        x,y = pos
         for j in range(4):
             shelf1 = Shelf(self.next_id(), self, content)
             shelf2 = Shelf(self.next_id(), self, content)
@@ -76,70 +76,50 @@ class Store(Model):
             self.grid.place_agent(shelf2, (x + j, y - 1))
             self.schedule.add(shelf1)
             self.schedule.add(shelf2)
-            self.shelf_list.append(shelf1)
-            self.shelf_list.append(shelf2)
 
-    def create_layout(self, amount = 20):
-        self.layout = np.zeros((self.width, self.height), dtype=str).tolist()
+    def create_layout(self, amount=20):
+        self.layout = []
         for i in range(amount):
             content = random.choice(self.possible_content)
             self.add_shelf(content)
 
     def shelf_count(self):
-        toReturn = 0
-        for x in self.layout:
-            for y in x:
-                if y == 'h' or y == 'v':
-                    toReturn+=1
-        return toReturn
+        return len(self.layout)
 
     def add_shelf(self, content):
         done = False
+        pos = 0
+        direction = 0
         while not done:
             direction = "h"
             if random.random() > .5: direction = "v"
-            x = random.randint(4, self.width - 4)
+            x = random.randint(1, self.width - 4)
             y = random.randint(1, self.height - 10)
-            pos = (x,y)
-            self.layout[x][y] = direction
+            pos = (x, y)
 
             if direction == "h" and (not self.check_for_shelf(pos, 'h')):
-                for j in range(4):
-                    shelf1 = Shelf(self.next_id(), self, content)
-                    shelf2 = Shelf(self.next_id(), self, content)
-                    self.grid.place_agent(shelf1, (x + j, y))
-                    self.grid.place_agent(shelf2, (x + j, y - 1))
-                    self.schedule.add(shelf1)
-                    self.schedule.add(shelf2)
-                    self.shelf_list.append(shelf1)
-                    self.shelf_list.append(shelf2)
+                self.__place_h_shelf__(pos, content)
                 done = True
 
-            elif not self.check_for_shelf(pos, 'v'):
-                for j in range(4):
-                    shelf1 = Shelf(self.next_id(), self, content)
-                    shelf2 = Shelf(self.next_id(), self, content)
-                    self.grid.place_agent(shelf1, (x, y + j))
-                    self.grid.place_agent(shelf2, (x  - 1, y + j))
-                    self.schedule.add(shelf1)
-                    self.schedule.add(shelf2)
-                    self.shelf_list.append(shelf1)
-                    self.shelf_list.append(shelf2)
+            elif direction == 'v' and (not self.check_for_shelf(pos, 'v')):
+                self.__place_v_shelf__(pos, content)
                 done = True
+
+        self.layout.append([pos, direction, content])
 
     def check_for_shelf(self, pos, direction):
         x, y = pos
         for j in range(4):
             if direction == 'h':
-                if (not self.grid.is_cell_empty((x+j,y))) or not self.grid.is_cell_empty((x + j, y - 1)):
+                if (not self.grid.is_cell_empty((x + j, y))) or (not self.grid.is_cell_empty((x + j, y - 1))):
                     return True
             elif direction == 'v':
-                if (not self.grid.is_cell_empty((x, y + j))) or not self.grid.is_cell_empty((x - 1, y +j)):
+                if (not self.grid.is_cell_empty((x, y + j))) or (not self.grid.is_cell_empty((x - 1, y + j))):
                     return True
         return False
 
     def mutate(self):
-        if random.random() > 1:
+        if random.random() > 0.5:
             self.add_shelf(random.choice(self.possible_content))
         else:
             self.remove_random_shelf()
@@ -148,19 +128,14 @@ class Store(Model):
         if self.shelf_count() == 0:
             return
         else:
-            done = False
-            while not done:
-                x = random.randint(4, self.width - 4)
-                y = random.randint(4, self.height - 10)
-                direction = self.layout[x][y]
-                if direction == 'h' or direction == 'v':
-                    self.remove_shelf((x,y),direction)
-                    done = True
+            shelf_info = random.choice(self.layout)
+            self.layout.remove(shelf_info)
+            pos, direction, content = shelf_info
+            self.remove_shelf(pos, direction)
 
-    def remove_shelf(self, pos, dir):
+    def remove_shelf(self, pos, direction):
         x,y = pos
-        self.layout[x][y] = ''
-        if dir == 'h':
+        if direction == 'h':
             for j in range(4):
                 self.__remove_shelf_square__(x + j, y)
                 self.__remove_shelf_square__(x + j, y - 1)
@@ -171,11 +146,13 @@ class Store(Model):
 
     def __remove_shelf_square__(self, x, y):
         contents = self.grid.iter_cell_list_contents((x, y))
-        toRemove = 0
+        to_remove = 0
         for c in contents:
-            toRemove = c
-        if toRemove == 0: return
-        self.grid.remove_agent(toRemove)
+            if type(c) == Shelf:
+                to_remove = c
+        if to_remove == 0:
+            return
+        self.grid.remove_agent(to_remove)
 
     def step(self):
         """
@@ -188,7 +165,7 @@ class Store(Model):
             self.to_kill.remove(cust)
             self.store_pop -= 1
         for i in range(4):
-            entry_pos = (int(self.width/2  - 1 + i), int(self.height) -1)
+            entry_pos = (int(self.width / 2 - 1 + i), int(self.height) - 1)
             if self.grid.is_cell_empty(entry_pos) and self.store_pop < self.capacity:
                 if self.customers > 0:
                     self.store_pop += 1
