@@ -3,7 +3,7 @@ from mesa.visualization.ModularVisualization import ModularServer
 from mesa.visualization.UserParam import UserSettableParameter
 
 from .model import Store
-from .agent import Customer, Shelf
+from .agent import Customer, Shelf, Checkout
 import math
 
 """
@@ -41,6 +41,14 @@ def store_portrayal(agent):
             portrayal["Color"] = '#ff00ff'
         else:
             portrayal["Color"] = '#000000'
+
+    if type(agent) is Checkout:
+        portrayal["Shape"] = "rect"
+        portrayal["Filled"] = "true"
+        portrayal["Layer"] = 1
+        portrayal["w"] = 1
+        portrayal["h"] = 1
+        portrayal["Color"] = '#add8e6'
 
     return portrayal
 

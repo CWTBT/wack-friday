@@ -103,7 +103,7 @@ class Customer(Agent):
             elif self.wants[-1] == shelf.contents:
                 del self.wants[-1]
                 shelf.amount -= 1
-                print("yoink")
+                # print("yoink")
                 if len(self.wants) == 0: 
                     self.state = "CHECKOUT"
                     break
@@ -122,3 +122,9 @@ class Customer(Agent):
         self.random.shuffle(final_candidates)
         self.model.grid.move_agent(self, final_candidates[0])
 
+
+class Checkout(Agent):
+
+    def __init__(self, unique_id, model, moore=True):
+        super().__init__(unique_id, model)
+        self.moore = moore
