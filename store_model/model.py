@@ -1,6 +1,6 @@
 from mesa import Model
 from mesa.time import SimultaneousActivation
-from mesa.space import MultiGrid
+from mesa.space import Grid
 import random
 
 from .agent import Customer, Shelf
@@ -34,7 +34,7 @@ class Store(Model):
         self.schedule = SimultaneousActivation(self)
 
         # Use a simple grid, where edges wrap around.
-        self.grid = MultiGrid(height, width, torus=False)
+        self.grid = Grid(height, width, torus=False)
 
         if self.layout == 0:
             self.create_layout(40)
@@ -169,7 +169,7 @@ class Store(Model):
             self.to_kill.remove(cust)
             self.store_pop -= 1
         for i in range(4):
-            entry_pos = (int(self.width / 2 - 1 + i), int(self.height) - 1)
+            entry_pos = (int(self.width / 2 - 9 + i), int(self.height) - 1)
             if self.grid.is_cell_empty(entry_pos) and self.store_pop < self.capacity:
                 if self.customers > 0:
                     self.store_pop += 1
