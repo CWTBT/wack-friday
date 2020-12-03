@@ -2,7 +2,7 @@ from mesa import Agent
 import math
 import random
 
-wanted_items = ["Electronics", "Clothing", "Cookware", "Video Games", "Sports Equipment", "Food"]
+wanted_items = ["Electronics", "Clothing", "Food", "misc"]
 
 
 # from sugarscape_cg
@@ -29,6 +29,7 @@ class Shelf(Agent):
         super().__init__(unique_id, model)
         self.moore = moore
         self.contents = contents
+        self.amount = 10
 
 
 class Customer(Agent):
@@ -39,7 +40,7 @@ class Customer(Agent):
         super().__init__(unique_id, model)
         self.state = "LOOK"
         self.moore = moore
-        self.patience = random.randint(100, 200)
+        self.patience = random.randint(500, 1000)
         self.wants = []
         self.exit_positions = [(int(self.model.grid.width/2  - 1 + i), int(self.model.grid.height) -1) for i in range(4)]
         for i in range(3):
@@ -48,6 +49,7 @@ class Customer(Agent):
     def step(self):
         if self.state == "LOOK":
             self.random_move()
+            self.shop()
         if self.state == "CHECKOUT":
             if self.pos == self.exit_positions[3]: self.model.exit(self)
             else: self.exit_move()
@@ -70,6 +72,17 @@ class Customer(Agent):
         if self.patience == 0: self.state = "CHECKOUT"
         self.model.grid.move_agent(self, next_move)
 
+    def shop(self):
+        n_shelves = [n for n in self.model.grid.get_neighbors(self.pos, self.moore) if type(n) is Shelf]
+        for shelf in n_shelves:
+            if shelf.amount == 0: continue
+            elif self.wants[-1] == shelf.contents:
+                del self.wants[-1]
+                shelf.amount -= 1
+                if len(self.wants) == 0: 
+                    self.state = "CHECKOUT"
+                    break
+            
     def exit_move(self):
         # Get neighborhood within vision
         valid_moves = [n for n in self.model.grid.get_neighborhood(self.pos, self.moore, True) if self.model.grid.is_cell_empty(n)]
