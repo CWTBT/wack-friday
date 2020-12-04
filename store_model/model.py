@@ -132,8 +132,8 @@ class Store(Model):
     def add_shelf(self, content):
         """adds shelf to the layout and to the grid"""
         done = False
-        pos = 0
-        direction = 0
+        pos = (0,0)
+        direction = ""
         while not done:
             direction = "h"
             if random.random() > .5: direction = "v"
