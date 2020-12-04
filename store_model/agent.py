@@ -42,6 +42,7 @@ class Customer(Agent):
         self.moore = moore
         self.patience = random.randint(100, 200)
         self.wants = []
+        self.haves = []
         self.want_index = 0
         self.target = None
         self.next_pos = None
@@ -51,19 +52,31 @@ class Customer(Agent):
 
     def step(self):
         if self.state == "LOOK":
-            self.next_pos = self.look_move()
+            self.next_pos = self.homing_move(self.target.pos)
             self.shop()
             self.patience -= 1
-            if self.patience == 0: self.state = "CHECKOUT"
+            if self.patience == 0: 
+                self.state = "CHECKOUT"
+                self.target = self.find_checkout()
         if self.state == "CHECKOUT":
+            if self.target in [n for n in self.model.grid.get_neighbors(self.pos, self.moore) if type(n) is Checkout]:
+                 self.state = "CHECKING OUT"
+            else: 
+                self.next_pos = self.homing_move(self.target.pos)
+        if self.state == "CHECKING OUT":
+            # TODO: Change this into cashing out items
+            if len(self.haves) == 0: self.state = "FINDING EXIT"
+            else: del self.haves[-1]
+        if self.state == "FINDING EXIT":
             if self.pos in self.exit_positions: 
                 self.state = "EXITING"
                 self.model.exit(self)
-            else: self.next_pos = self.exit_move()
+            else: self.next_pos = self.homing_move(self.exit_positions[3])
     
     def advance(self):
         self.model.grid.move_agent(self, self.next_pos)
 
+    #TODO: The following two functions could be combined somehow, they're almost identical
     def find_shelf(self, wanted_item):
         best_shelf = None
         min_dist = 9999
@@ -75,18 +88,15 @@ class Customer(Agent):
                     best_shelf = shelf
         return best_shelf
 
-    # TODO: combine look_move() and exit_move() into homing_move(target)
-    def look_move(self):
-        # Get neighborhood within vision
-        valid_moves = [n for n in self.model.grid.get_neighborhood(self.pos, self.moore, True) if self.model.grid.is_cell_empty(n)]
-        if len(valid_moves) == 0: return self.pos
-        min_dist = min([get_distance(self.target.pos, pos) for pos in valid_moves])
-        final_candidates = [
-            pos for pos in valid_moves if get_distance(self.target.pos, pos) == min_dist
-        ]
-        self.random.shuffle(final_candidates)
-        return final_candidates[0]
-        #self.model.grid.move_agent(self, final_candidates[0])
+    def find_checkout(self):
+        best_checkout = None
+        min_dist = 9999
+        for checkout in self.model.checkout_list:
+            dist = get_distance(checkout.pos, self.pos)
+            if dist < min_dist:
+                min_dist = dist
+                best_checkout = checkout
+        return best_checkout
 
     def shop(self):
         n_shelves = [n for n in self.model.grid.get_neighbors(self.pos, self.moore) if type(n) is Shelf]
@@ -95,28 +105,27 @@ class Customer(Agent):
             elif self.wants[self.want_index] == shelf.contents:
                 shelf.amount -= 1
                 self.patience += 100
+                self.haves.append(self.wants[self.want_index])
                 del self.wants[self.want_index]
                 if len(self.wants) == 0: 
                     self.state = "CHECKOUT"
+                    self.target = self.find_checkout()
                     break
                 else: 
                     self.want_index = 0
                     self.target = self.find_shelf(self.wants[self.want_index])
 
-            
-    def exit_move(self):
+    def homing_move(self, target_square):
         # Get neighborhood within vision
         valid_moves = [n for n in self.model.grid.get_neighborhood(self.pos, self.moore, True) if self.model.grid.is_cell_empty(n)]
         if len(valid_moves) == 0: return self.pos
-        # For now, just pathfinds to the far right door
-        min_dist = min([get_distance(self.exit_positions[0], pos) for pos in valid_moves])
+        min_dist = min([get_distance(target_square, pos) for pos in valid_moves])
         
         final_candidates = [
-            pos for pos in valid_moves if get_distance(self.exit_positions[0], pos) == min_dist
+            pos for pos in valid_moves if get_distance(target_square, pos) == min_dist
         ]
         self.random.shuffle(final_candidates)
         return final_candidates[0]
-        #self.model.grid.move_agent(self, final_candidates[0])
 
 
 class Checkout(Agent):

@@ -25,6 +25,7 @@ class Store(Model):
         self.possible_content = ["Electronics", "Clothing", "Food", "misc"]
         self.layout = layout
         self.shelf_list = []
+        self.checkout_list = []
 
         # Set up the grid and schedule.
 
@@ -49,6 +50,7 @@ class Store(Model):
                 checkout = Checkout(self.next_id(), self)
                 self.grid.place_agent(checkout, (x, self.height - 5))
                 self.schedule.add(checkout)
+                self.checkout_list.append(checkout)
 
         self.running = True
 
