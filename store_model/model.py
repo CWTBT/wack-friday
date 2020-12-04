@@ -3,6 +3,7 @@ from mesa.time import SimultaneousActivation
 from mesa.space import Grid
 import random
 import numpy as np
+import math
 
 from .agent import Customer, Shelf, Checkout
 
@@ -57,13 +58,31 @@ class Store(Model):
 
         self.running = True
 
+    # sigmoid function for calculating success
+    def __sigmoid__(self, x):
+        return 1 / (1 + math.exp(-x))
+
+    def score(self):
+        """
+
+        :return: Score for evo algorithm
+        """
+        return self.__sigmoid__(self.total_satisfaction) + self.__sigmoid__(self.total_profit)
+
     def clone(self):
+        """
+        :return: a clone with the same layout
+        """
         return Store(self.height, self.width, self.capacity, self.customers, self.layout)
 
     def get_layout(self):
+        """
+        :return: the layout of the store
+        """
         return self.layout
 
     def set_up(self):
+        """Loads a set up to the grid based on a provided layout"""
         for shelf in self.layout:
             pos, direction, content = shelf
             if direction == 'v':
@@ -71,6 +90,7 @@ class Store(Model):
             else:
                 self.__place_h_shelf__(pos, content)
 
+    # places a vertical shelf on the grid
     def __place_v_shelf__(self, pos, content):
         x, y = pos
         for j in range(4):
@@ -83,6 +103,7 @@ class Store(Model):
             self.shelf_list.append(shelf1)
             self.shelf_list.append(shelf2)
 
+    # places a horizontal shelf on the grid
     def __place_h_shelf__(self, pos, content):
         x,y = pos
         for j in range(4):
@@ -96,15 +117,20 @@ class Store(Model):
             self.shelf_list.append(shelf2)
 
     def create_layout(self, amount=20):
+        """
+        Creates a random store layout. Places 2x4 shelves that can be horizontal or vertical.
+        """
         self.layout = []
         for i in range(amount):
             content = random.choice(self.possible_content)
             self.add_shelf(content)
 
     def shelf_count(self):
+        """returns the number of shelves"""
         return len(self.layout)
 
     def add_shelf(self, content):
+        """adds shelf to the layout and to the grid"""
         done = False
         pos = 0
         direction = 0
@@ -126,6 +152,10 @@ class Store(Model):
         self.layout.append([pos, direction, content])
 
     def check_for_shelf(self, pos, direction):
+        """
+        Checks if a shelf can be placed in a area without overlapping.
+        Returns true if there is a shelf in the way
+        """
         x, y = pos
         for j in range(4):
             if direction == 'h':
@@ -137,12 +167,14 @@ class Store(Model):
         return False
 
     def mutate(self):
+        """adds or removes a random shelf"""
         if random.random() > 0.5:
             self.add_shelf(random.choice(self.possible_content))
         else:
             self.remove_random_shelf()
 
     def remove_random_shelf(self):
+        """Removes a random shelf from the layout and the grid"""
         if self.shelf_count() == 0:
             return
         else:
