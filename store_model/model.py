@@ -177,7 +177,7 @@ class Store(Model):
                     cust = Customer(self.next_id(), self)
                     self.grid.place_agent(cust, entry_pos)
                     self.schedule.add(cust)
-                    cust.target = cust.find_shelf()
+                    cust.target = cust.find_shelf(cust.wants[0])
 
     def exit(self, cust):
         self.to_kill.append(cust)
