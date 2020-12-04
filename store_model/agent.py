@@ -3,7 +3,7 @@ import math
 import random
 
 wanted_items = ["Electronics", "Clothing", "Food", "misc"]
-price_map = {"Electronics": 200, "Clothing": 50, "Food": 20, "misc":10}
+price_map = {"Electronics": 20, "Clothing": 5, "Food": 2, "misc":1}
 
 
 # from sugarscape_cg
@@ -72,12 +72,12 @@ class Customer(Agent):
                 self.state = "CHECKOUT"
                 self.target = self.find_checkout()
             elif self.item_patience == 0:
-                self.satisfaction -= 10
+                self.satisfaction -= 1
                 self.next_item()
                 self.item_patience = 100
         if self.state == "CHECKOUT":
             if self.target in [n for n in self.model.grid.get_neighbors(self.pos, self.moore) if type(n) is Checkout]:
-                 self.satisfaction += 20 * len(self.haves)
+                 self.satisfaction += 2 * len(self.haves)
                  self.state = "CHECKING OUT"
             else: 
                 self.next_pos = self.homing_move(self.target.pos)
