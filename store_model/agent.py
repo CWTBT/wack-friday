@@ -118,3 +118,9 @@ class Customer(Agent):
         return final_candidates[0]
         #self.model.grid.move_agent(self, final_candidates[0])
 
+
+class Checkout(Agent):
+
+    def __init__(self, unique_id, model, moore=True):
+        super().__init__(unique_id, model)
+        self.moore = moore

@@ -2,8 +2,9 @@ from mesa import Model
 from mesa.time import SimultaneousActivation
 from mesa.space import Grid
 import random
+import numpy as np
 
-from .agent import Customer, Shelf
+from .agent import Customer, Shelf, Checkout
 
 # derived from ConwaysGameOfLife
 class Store(Model):
@@ -36,10 +37,18 @@ class Store(Model):
         # Use a simple grid, where edges wrap around.
         self.grid = Grid(height, width, torus=False)
 
+        # if no layout is fed in, generates it's own layout. Else it feeds the layout to the grid
         if self.layout == 0:
             self.create_layout(40)
         else:
             self.set_up()
+
+        # place check-out squares
+        for x in np.arange(2, self.width-2, 3):
+            if (x < self.width / 2 - 15) or (x > self.width / 2 ):
+                checkout = Checkout(self.next_id(), self)
+                self.grid.place_agent(checkout, (x, self.height - 5))
+                self.schedule.add(checkout)
 
         self.running = True
 
