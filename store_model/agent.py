@@ -3,6 +3,7 @@ import math
 import random
 
 wanted_items = ["Electronics", "Clothing", "Food", "misc"]
+price_map = {"Electronics": 200, "Clothing": 50, "Food": 20, "misc":10}
 
 
 # from sugarscape_cg
@@ -41,12 +42,13 @@ class Customer(Agent):
         self.state = "LOOK"
         self.moore = moore
         self.patience = random.randint(100, 200)
+        self.satisfaction = 100
         self.wants = []
         self.haves = []
         self.want_index = 0
         self.target = None
         self.next_pos = None
-        for i in range(3):
+        for i in range(5):
             self.wants.append(random.choice(wanted_items))
         self.exit_positions = [(int(self.model.grid.width/2  + 7 + i), int(self.model.grid.height) -1) for i in range(4)]
 
@@ -65,11 +67,16 @@ class Customer(Agent):
                 self.next_pos = self.homing_move(self.target.pos)
         if self.state == "CHECKING OUT":
             # TODO: Change this into cashing out items
-            if len(self.haves) == 0: self.state = "FINDING EXIT"
-            else: del self.haves[-1]
+            if len(self.haves) == 0: 
+                self.satisfaction -= 20 * len(self.wants)
+                self.state = "FINDING EXIT"
+            else: 
+                self.model.total_profit += price_map[self.haves[-1]]
+                del self.haves[-1]
         if self.state == "FINDING EXIT":
             if self.pos in self.exit_positions: 
                 self.state = "EXITING"
+                self.model.total_satisfaction += self.satisfaction
                 self.model.exit(self)
             else: self.next_pos = self.homing_move(self.exit_positions[3])
     

@@ -27,6 +27,9 @@ class Store(Model):
         self.shelf_list = []
         self.checkout_list = []
 
+        self.total_satisfaction = 0
+        self.total_profit = 0
+
         # Set up the grid and schedule.
 
         # Use SimultaneousActivation which simulates all the cells
@@ -189,6 +192,8 @@ class Store(Model):
                     self.grid.place_agent(cust, entry_pos)
                     self.schedule.add(cust)
                     cust.target = cust.find_shelf(cust.wants[0])
+        print(f"SATISFACTION: {self.total_satisfaction}")
+        print(f"PROFIT: {self.total_profit}")
 
     def exit(self, cust):
         self.to_kill.append(cust)
