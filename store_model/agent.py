@@ -43,7 +43,7 @@ class Customer(Agent):
         self.moore = moore
         self.patience = 500
         self.item_patience = 100
-        self.satisfaction = 100
+        self.satisfaction = 0
         self.wants = []
         self.haves = []
         self.want_index = 0
@@ -55,6 +55,15 @@ class Customer(Agent):
 
     def step(self):
         if self.state == "LOOK":
+            if self.target == None:
+                    if len(self.wants) == 1: 
+                        self.target = self.find_checkout()
+                        self.state = "CHECKOUT"
+                    else: 
+                        del self.wants[self.want_index]
+                        self.next_item()
+                    self.next_pos = self.pos
+                    return
             self.next_pos = self.homing_move(self.target.pos)
             self.shop()
             self.patience -= 1
@@ -68,14 +77,13 @@ class Customer(Agent):
                 self.item_patience = 100
         if self.state == "CHECKOUT":
             if self.target in [n for n in self.model.grid.get_neighbors(self.pos, self.moore) if type(n) is Checkout]:
+                 self.satisfaction += 20 * len(self.haves)
                  self.state = "CHECKING OUT"
             else: 
                 self.next_pos = self.homing_move(self.target.pos)
         if self.state == "CHECKING OUT":
             # TODO: Change this into cashing out items
-            if len(self.haves) == 0: 
-                self.satisfaction -= 20 * len(self.wants)
-                self.state = "FINDING EXIT"
+            if len(self.haves) == 0: self.state = "FINDING EXIT"
             else: 
                 self.model.total_profit += price_map[self.haves[-1]]
                 del self.haves[-1]
@@ -112,11 +120,13 @@ class Customer(Agent):
         return best_checkout
 
     def shop(self):
-        n_shelves = [n for n in self.model.grid.get_neighbors(self.pos, self.moore) if type(n) is Shelf]
-        for shelf in n_shelves:
-            if shelf.amount == 0: continue
-            elif self.wants[self.want_index] == shelf.contents:
+        #n_shelves = [n for n in self.model.grid.get_neighbors(self.pos, self.moore) if type(n) is Shelf]
+        if self.target in [n for n in self.model.grid.get_neighbors(self.pos, self.moore) if type(n) is Shelf]:
+            shelf = self.target
+            if shelf.amount == 0: self.target = self.find_shelf(self.wants[self.want_index])
+            else:
                 shelf.amount -= 1
+                if shelf.amount == 0: shelf.contents = "Empty"
                 self.patience += 100
                 self.item_patience = 100
                 self.haves.append(self.wants[self.want_index])
@@ -124,7 +134,6 @@ class Customer(Agent):
                 if len(self.wants) == 0: 
                     self.state = "CHECKOUT"
                     self.target = self.find_checkout()
-                    break
                 else: 
                     self.next_item()
 

@@ -39,6 +39,8 @@ def store_portrayal(agent):
             portrayal["Color"] = '#00ff00'
         elif agent.contents == "misc":
             portrayal["Color"] = '#ff00ff'
+        elif agent.contents == "Empty":
+            portrayal["Color"] = '#C0C0C0'
         else:
             portrayal["Color"] = '#000000'
 
