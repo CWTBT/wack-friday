@@ -41,7 +41,8 @@ class Customer(Agent):
         super().__init__(unique_id, model)
         self.state = "LOOK"
         self.moore = moore
-        self.patience = random.randint(100, 200)
+        self.patience = 500
+        self.item_patience = 100
         self.satisfaction = 100
         self.wants = []
         self.haves = []
@@ -57,9 +58,14 @@ class Customer(Agent):
             self.next_pos = self.homing_move(self.target.pos)
             self.shop()
             self.patience -= 1
+            self.item_patience -= 1
             if self.patience == 0: 
                 self.state = "CHECKOUT"
                 self.target = self.find_checkout()
+            elif self.item_patience == 0:
+                self.satisfaction -= 10
+                self.next_item()
+                self.item_patience = 100
         if self.state == "CHECKOUT":
             if self.target in [n for n in self.model.grid.get_neighbors(self.pos, self.moore) if type(n) is Checkout]:
                  self.state = "CHECKING OUT"
@@ -112,6 +118,7 @@ class Customer(Agent):
             elif self.wants[self.want_index] == shelf.contents:
                 shelf.amount -= 1
                 self.patience += 100
+                self.item_patience = 100
                 self.haves.append(self.wants[self.want_index])
                 del self.wants[self.want_index]
                 if len(self.wants) == 0: 
@@ -119,8 +126,12 @@ class Customer(Agent):
                     self.target = self.find_checkout()
                     break
                 else: 
-                    self.want_index = 0
-                    self.target = self.find_shelf(self.wants[self.want_index])
+                    self.next_item()
+
+    def next_item(self):
+        self.want_index += 1
+        if self.want_index >= len(self.wants): self.want_index = 0
+        self.target = self.find_shelf(self.wants[self.want_index])
 
     def homing_move(self, target_square):
         # Get neighborhood within vision
